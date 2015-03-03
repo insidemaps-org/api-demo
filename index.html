@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+	<!-- jQuery -->
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+	<!-- Bootstrap -->
+	<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css" />
+	<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css" />
+	<script type="application/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+
+	<link href="https://gitcdn.github.io/bootstrap-toggle/2.1.0/css/bootstrap-toggle.min.css" rel="stylesheet">
+	<script src="https://gitcdn.github.io/bootstrap-toggle/2.1.0/js/bootstrap-toggle.min.js"></script>
+
+	<!-- Page style and script -->
+	<script type='application/javascript' src='https://www.insidemaps.com/apis/build/fpapi.min.js'></script>
+
+	<title>XFINITY Home: Welcome Jorgen</title>
+
+	<style>
+		.navbar {
+			background-image: linear-gradient(to bottom,#f8f8f8 0,#eee 100%);
+			background-image: -webkit-gradient(linear,left top,left bottom,from(#f8f8f8),to(#eee));
+			background-image: -webkit-linear-gradient(top,#f8f8f8 0,#eee 100%);
+		}
+
+		.demo-navbar-content {
+			margin: 5px;
+		}
+
+		.demo-navbar-nav > li > a {
+			padding-left: 5px;
+			padding-right: 5px;
+		}
+
+		.demo-navbar-alert {
+			padding: 13px;
+			margin-left: 20px;
+			margin-top: 0px;
+			margin-bottom: 0px;
+			margin-right: 0px;
+		}
+
+		.demo-content {
+			margin-left: auto;
+			margin-right: auto;
+		}
+
+		.demo-tabpanel {
+			width: 100%;
+		}
+
+		.demo-tab-pane {
+			padding: 10px;
+			border: 1px solid #ddd;
+			border-top-color: transparent;
+			min-height: 60px;
+		}
+
+		.action-button {
+			position: absolute;
+			right: 15px;
+			top: 5px;
+			cursor: pointer;
+		}
+
+		.content-wrapper {
+			position: relative;
+			width: 946px;
+			margin: 15px auto;
+		}
+
+		.floor-plan-container {
+			position: relative;
+			width: 946px;
+			height: 532px;
+		}
+
+		#loading-indicator {
+			position: absolute;
+			width: 48px;
+			height: 48px;
+			top: 8px;
+			left: 48%;
+			background-image: url("http://www.vallisuk.com/app/webroot/images/load-indicator.gif");
+		}
+	</style>
+
+</head>
+
+<body style="padding: 15px 0px;">
+
+	<div class="demo-content">
+
+		<div style="width: 100%;">
+
+			<div class="content-wrapper">
+				<!-- Header -->
+				<nav class="navbar navbar-default">
+					<div class="demo-navbar-content">
+						<div class="navbar-header">
+							<a class="navbar-brand" href="#"><b>XFINITY</b> Home: Welcome Jorgen</a>
+						</div>
+						<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+							<ul class="nav navbar-nav navbar-right demo-navbar-nav">
+								<li><a href="#">Emily</a></li>
+								<li><a>|</a></li>
+								<li><a href="#">Isabelle</a></li>
+								<li><a>|</a></li>
+								<li><a href="#">at home</a></li>
+								<li><div class="alert alert-success demo-navbar-alert" role="alert">System OK</div></li>
+							 </ul>
+						</div>
+					</div>
+				</nav>
+
+				<!-- Tabs -->
+				<div role="tabpanel" class="demo-tabpanel">
+
+					<!-- Nav tabs -->
+					<ul class="nav nav-tabs" role="tablist">
+						<li role="presentation" class="active">
+							<a href="#lights-and-switches" aria-controls="lights-and-switches" role="tab" data-toggle="tab">Lights & Switches</a>
+						</li>
+						<li role="presentation">
+							<a href="#comfort-and-audio" aria-controls="comfort-and-audio" role="tab" data-toggle="tab">Comfort & Audio</a>
+						</li>
+						<li role="presentation">
+							<a href="#security-and-locks" aria-controls="security-and-locks" role="tab" data-toggle="tab">Security & Locks</a>
+						</li>
+						<li role="presentation">
+							<a href="#damage-and-danger" aria-controls="damage-and-danger" role="tab" data-toggle="tab">Damage & Danger</a>
+						</li>
+					</ul>
+
+				</div>
+
+				<!-- div for api iframe -->
+				<div id="insidemaps-floor-plan" class="floor-plan-container"></div>
+
+				<!-- Tab panes -->
+				<div class="tab-content" style="position: relative;">
+
+					<div id="loading-indicator"></div>
+
+					<div role="tabpanel" class="tab-pane demo-tab-pane fade in active" id="lights-and-switches">
+						<ul class="list-group" id="actions-list" style="margin-bottom: 5px">
+						</ul>
+					</div>
+
+					<div role="tabpanel" class="tab-pane demo-tab-pane fade" id="comfort-and-audio">
+						<b>No Devices Available</b>
+					</div>
+
+					<div role="tabpanel" class="tab-pane demo-tab-pane fade" id="security-and-locks">
+						<b>No Devices Available</b>
+					</div>
+
+					<div role="tabpanel" class="tab-pane demo-tab-pane fade" id="damage-and-danger">
+						<b>No Devices Available</b>
+					</div>
+
+				</div>
+			</div>
+
+		</div>
+
+	</div>
+
+	<script>
+
+		(function (window, document) {
+
+			var floorPlan = null;
+
+			// On tab button click change tab view
+			function onTabClick(e) {
+				e.preventDefault();
+				$(this).tab('show');
+			}
+
+			// Initialize tabs
+			function initTabs() {
+				$('#myTab a').click(onTabClick);
+			}
+
+			// Create and initialize action list item
+			function createActionListItem(obj) {
+				var root = document.createElement("li");
+				root.className = "list-group-item";
+
+				var button = document.createElement("input");
+				button.id = "toggle_" + obj.id;
+				button.setAttribute("type", "checkbox");
+				button.setAttribute("checked", "");
+				root.appendChild(button);
+				$(button).bootstrapToggle({ size: "small", style: "action-button" });
+				$(button).bootstrapToggle(obj.persistentData.state.toLowerCase());
+				button.onchange = function() {
+					if (this.getAttribute("toggled")) {
+						this.removeAttribute("toggled");
+						return;
+					}
+
+					var self = this;
+					floorPlan.notifyHAObject({ id: obj.id, action: 'Toggle' })
+
+					.then( function( newState ) {
+						$(self).bootstrapToggle(newState);
+					});
+
+				};
+
+				var txt = document.createElement("div");
+				txt.innerHTML = obj.name;
+				txt.id = "name_" + obj.id;
+				root.appendChild(txt);
+
+				return root;
+			}
+
+			// Success callback for loading home automation objects. It creates actions list.
+			function onHomeAutomationObjectsLoaded(objects) {
+				var actionsList = document.getElementById("actions-list");
+				for (var i = 0; i < objects.length; i++) {
+					var actionListItem = createActionListItem(objects[i]);
+					actionsList.appendChild(actionListItem);
+				}
+			}
+
+			// Initialize home automation objects
+			function initHomeAutomationObjects() {
+				floorPlan.getHomeAutomationObjects()
+
+				.then( function( objects ) {
+					document.getElementById('loading-indicator').style.display = "none";
+					onHomeAutomationObjectsLoaded( objects );
+				});
+			}
+
+			function homeAutomationEventListener( data ) {
+				var id = data.id;
+				var newState = data.persistentData.state;
+				var newName = data.name;
+
+				var toggle = document.getElementById("toggle_" + data.id);
+				if (toggle) {
+					toggle.setAttribute("toggled", true);
+					$(toggle).bootstrapToggle(data.persistentData.state.toLowerCase());
+				}
+
+				var nameText = document.getElementById("name_" + data.id);
+				if (nameText) {
+					nameText.innerHTML = newName;
+				}
+			}
+
+			// Initialize
+			function init() {
+				floorPlan = new InsideMaps.FloorPlan();
+				floorPlan.init( {
+					domTargetId: 'insidemaps-floor-plan',
+					model: 'WzqsJlqXY7',
+					originUrl: location.protocol + '//' + location.host,
+					apiKey: undefined, // Allow insidemaps to control/track which app is using our API.
+					params: {
+						autoPlay: true
+					}
+				})
+
+				.then( function( data ) {
+					initHomeAutomationObjects();
+					floorPlan.addHAObjectEventListener( homeAutomationEventListener );
+				});
+
+				initTabs();
+			}
+
+			// Listen document ready state
+			$(document).ready(init);
+
+		}) (window, document);
+
+	</script>
+
+</body>
+
+</html>
