@@ -186,6 +186,23 @@
 				$('#myTab a').click(onTabClick);
 			}
 
+			// Utility
+			function capitalize(name) {
+				return name.toLowerCase().replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
+			}
+
+			function formatObjectName(fullName) {
+				var strippedName = fullName.replace(/_/g, " ");
+
+				var index = strippedName.indexOf("(");
+				var objectName = capitalize(strippedName.substring(0, index - 1));
+				var boldedName = "<b>" + objectName + "</b>";
+
+				var roomName = capitalize(strippedName.substring(index + 1, strippedName.length - 1));
+
+				return boldedName + " (" + roomName + ")";
+			}
+
 			// Create and initialize action list item
 			function createActionListItem(obj) {
 				var root = document.createElement("li");
@@ -214,7 +231,7 @@
 				};
 
 				var txt = document.createElement("div");
-				txt.innerHTML = obj.name;
+				txt.innerHTML = formatObjectName(obj.name);
 				txt.id = "name_" + obj.id;
 				root.appendChild(txt);
 
@@ -253,7 +270,7 @@
 
 				var nameText = document.getElementById("name_" + data.id);
 				if (nameText) {
-					nameText.innerHTML = newName;
+					nameText.innerHTML = formatObjectName(newName);
 				}
 			}
 
