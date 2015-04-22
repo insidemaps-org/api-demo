@@ -284,7 +284,9 @@
 					apiKey: undefined, // Allow insidemaps to control/track which app is using our API.
 					params: {
 						autoPlay: true
-					}
+					},
+					host: 'http://demo.insidemaps.com',  // defaults to www.insidemaps.com
+					env: 'prod'
 				})
 
 				.then( function( data ) {
