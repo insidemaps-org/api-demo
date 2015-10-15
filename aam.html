@@ -12,7 +12,6 @@
 		.content-container {
 			position: relative;
 			width: 946px;
-			height: 582px;
 			display: block;
 			margin-left: auto;
 			margin-right: auto;
@@ -21,7 +20,7 @@
 		.virtual-tour-container {
 			position: relative;
 			width: 100%;
-			height: 90%;
+			height: 530px;
 		}
 
 		.debug-container {
@@ -29,8 +28,8 @@
 			background-color: #D3D3D3;
 			padding-top: 15px;
 			padding-bottom: 15px;
-			width: 100%;
-			height: 10%;
+			width: 50%;
+			height: 120px;
 			text-align: center;
 		}
 
@@ -48,16 +47,52 @@
 		<!-- div for api iframe -->
 		<div id="insidemaps-virtual-tour" class="virtual-tour-container"></div>
 
-		<div id="camera-position" class="debug-container">
-			Position: x: <input id="position-x" type="text" class="param-input"> y: <input id="position-y" type="text" class="param-input"> z: <input id="position-z" type="text" class="param-input"><br>
-			Look At: x: <input id="lookat-x" type="text" class="param-input"> y: <input id="lookat-y" type="text" class="param-input"> z: <input id="lookat-z" type="text" class="param-input"><br>
-			<button id="cameraUpdateButton" style="margin-top: 10px;" onclick="updateFromInputs()" disabled>Update</button>
+		<div id="camera-container" class="debug-container">
+			<b>Camera</b><br>
+			<div>
+				Position:
+				x: <input id="camera-position-x" type="text" class="param-input">
+				y: <input id="camera-position-y" type="text" class="param-input">
+				z: <input id="camera-position-z" type="text" class="param-input">
+			</div>
+			<div>
+				Look At:
+				x: <input id="camera-lookat-x" type="text" class="param-input">
+				y: <input id="camera-lookat-y" type="text" class="param-input">
+				z: <input id="camera-lookat-z" type="text" class="param-input">
+			</div>
+			<button class="action-button" style="margin-top: 10px;" onclick="updateCameraWithInputParams()" disabled>Update</button>
+		</div>
+
+		<div id="material-position" class="debug-container">
+			<b>Material</b><br>
+			<div>
+				Material ID:
+				<span id="material-id" style="width: 250px;">Unknown</span>
+				<button class="action-button" onclick="highlightSelectedMaterial( true )" disabled>Highlight</button>
+				<button class="action-button" onclick="highlightSelectedMaterial( false )" disabled>Unhighlight</button>
+			</div>
+			<div>
+				Origin:
+				x: <input id="material-origin-x" type="text" class="param-input" value="0">
+				y: <input id="material-origin-y" type="text" class="param-input" value="0">
+				z: <input id="material-origin-z" type="text" class="param-input"value="0">
+			</div>
+			<div>
+				Direction:
+				x: <input id="material-direction-x" type="text" class="param-input" value="0">
+				y: <input id="material-direction-y" type="text" class="param-input" value="-1">
+				z: <input id="material-direction-z" type="text" class="param-input" value="0">
+			</div>
+			<button class="action-button" style="margin-top: 10px;" onclick="selectMaterialWithInputParams()" disabled>Lookup With Input Data</button>
+			<button class="action-button" style="margin-top: 10px;" onclick="selectMaterialWithCameraParams()" disabled>Lookup With Camera Data</button>
 		</div>
 	</div>
 
 	<script>
 
 		var virtualTour;
+		var selectedMaterialId;
 
 		function init() {
 
@@ -73,19 +108,24 @@
 				virtualTour.addCameraEventListener( onCameraUpdate )
 
 				.then( function() {
-					document.getElementById( 'cameraUpdateButton' ).disabled = false;
+					var actionButtons = document.getElementsByClassName( 'action-button' );
+					Array.prototype.forEach.call( actionButtons, function( button ) {
+						button.disabled = false;
+					} );
 				});
 			});
 
 		}
 
-		/* Utility conversion functions */
+		///////////////////////
+		// Utility functions //
+		///////////////////////
 
-		function cameraDataToVector( cameraData ) {
+		function parseCameraData( cameraData ) {
 
-			var x = parseFloat( cameraData.x ).toFixed( 2 );
-			var y = parseFloat( cameraData.y ).toFixed( 2 );
-			var z = parseFloat( cameraData.z ).toFixed( 2 );
+			var x = cameraData.x.toFixed( 2 );
+			var y = cameraData.y.toFixed( 2 );
+			var z = cameraData.z.toFixed( 2 );
 
 			return { x: x, y: y, z: z };
 
@@ -97,48 +137,103 @@
 
 		}
 
-		function updateFromInputs() {
+		function vectorFromInputs( inputXId, inputYId, inputZId ) {
 
-			var position, lookAt;
+			var x = parseFloat( document.getElementById( inputXId ).value );
+			var y = parseFloat( document.getElementById( inputYId ).value );
+			var z = parseFloat( document.getElementById( inputZId ).value );
 
-			var posX = parseFloat( document.getElementById( 'position-x' ).value );
-			var posY = parseFloat( document.getElementById( 'position-y' ).value );
-			var posZ = parseFloat( document.getElementById( 'position-z' ).value );
-
-			if ( !isNaN( posX ) && !isNaN( posY ) && !isNaN( posZ ) ) {
-				position = { x: posX, y: posY, z: posZ };
+			if ( !isNaN( x ) && !isNaN( y ) && !isNaN( z ) ) {
+				return { x: x, y: y, z: z };
 			}
 
-			var lookAtX = parseFloat( document.getElementById( 'lookat-x' ).value );
-			var lookAtY = parseFloat( document.getElementById( 'lookat-y' ).value );
-			var lookAtZ = parseFloat( document.getElementById( 'lookat-z' ).value );
+			return null;
 
-			if ( !isNaN( lookAtX ) && !isNaN( lookAtY ) && !isNaN( lookAtZ ) ) {
-				lookAt = { x: lookAtX, y: lookAtY, z: lookAtZ };
-			}
+		}
+
+		function populateInputsFromVector( vector, inputXId, inputYId, inputZId ) {
+
+			document.getElementById( inputXId ).value = vector.x;
+			document.getElementById( inputYId ).value = vector.y;
+			document.getElementById( inputZId ).value = vector.z;
+
+		}
+
+		/////////////////////////
+		// Camera demo section //
+		/////////////////////////
+
+		function updateCameraWithInputParams() {
+
+			var position = vectorFromInputs( 'camera-position-x', 'camera-position-y', 'camera-position-z' );
+			var lookAt = vectorFromInputs( 'camera-lookat-x', 'camera-lookat-y', 'camera-lookat-z' );
 
 			if ( position || lookAt ) {
-				var cameraParams = {};
-				if ( position ) cameraParams.position = position;
-				if ( lookAt ) cameraParams.lookAt = lookAt;
-
-				virtualTour.setCameraParams( cameraParams );
+				virtualTour.setCameraParams( position, lookAt );
 			}
 
 		}
 
 		function onCameraUpdate( cameraData ) {
 
-			var positionVector = cameraDataToVector( cameraData.position );
-			var lookAtVector = cameraDataToVector( cameraData.lookAt );
+			var positionVector = parseCameraData( cameraData.position );
+			var lookAtVector = parseCameraData( cameraData.lookAt );
 
-			document.getElementById( 'position-x' ).value = positionVector.x;
-			document.getElementById( 'position-y' ).value = positionVector.y;
-			document.getElementById( 'position-z' ).value = positionVector.z;
+			populateInputsFromVector( positionVector, 'camera-position-x', 'camera-position-y', 'camera-position-z' );
+			populateInputsFromVector( lookAtVector, 'camera-lookat-x', 'camera-lookat-y', 'camera-lookat-z' );
 
-			document.getElementById( 'lookat-x' ).value = lookAtVector.x;
-			document.getElementById( 'lookat-y' ).value = lookAtVector.y;
-			document.getElementById( 'lookat-z' ).value = lookAtVector.z;
+		}
+
+		///////////////////////////
+		// Material demo section //
+		///////////////////////////
+
+		function selectMaterial( origin, direction ) {
+
+			if ( origin && direction ) {
+
+				virtualTour.getMaterialIdForIntersection( origin, direction )
+
+				.then( function( materialId ) {
+					selectedMaterialId = materialId;
+
+					var materialString = selectedMaterialId ? selectedMaterialId : 'Unknown';
+					document.getElementById( 'material-id' ).innerHTML = materialString;
+				} );
+
+			}
+
+		}
+
+		function selectMaterialWithInputParams() {
+
+			var origin = vectorFromInputs( 'material-origin-x', 'material-origin-y', 'material-origin-z' );
+			var direction = vectorFromInputs( 'material-direction-x', 'material-direction-y', 'material-direction-z' );
+
+			selectMaterial( origin, direction );
+
+		}
+
+		function selectMaterialWithCameraParams() {
+
+			var origin = vectorFromInputs( 'camera-position-x', 'camera-position-y', 'camera-position-z' );
+			var direction = vectorFromInputs( 'camera-lookat-x', 'camera-lookat-y', 'camera-lookat-z' );
+
+			selectMaterial( origin, direction );
+
+		}
+
+		function highlightSelectedMaterial( highlight ) {
+
+			if ( selectedMaterialId ) {
+
+				if ( !!highlight ) {
+					virtualTour.highlightMaterial( selectedMaterialId );
+				} else {
+					virtualTour.unhighlightMaterial( selectedMaterialId );
+				}
+
+			}
 
 		}
 

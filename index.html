@@ -84,7 +84,7 @@
 			height: 48px;
 			top: 8px;
 			left: 48%;
-			background-image: url("http://www.vallisuk.com/app/webroot/images/load-indicator.gif");
+			background-image: url("/docs/indicator.gif");
 		}
 	</style>
 
@@ -222,7 +222,7 @@
 					}
 
 					var self = this;
-					floorPlan.notifyHAObject({ id: obj.id, action: 'Toggle' })
+					floorPlan.notifyHAObject( obj.id, 'Toggle' )
 
 					.then( function( newState ) {
 						$(self).bootstrapToggle(newState);
