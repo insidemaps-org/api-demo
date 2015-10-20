@@ -90,7 +90,3 @@ call npm install
 API calls example are in following repo:
 https://github.com/insidemaps-org/api-demo
 
-
-
-regards,
-Vladimir
