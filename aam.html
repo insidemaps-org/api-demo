@@ -29,12 +29,21 @@
 			padding-top: 15px;
 			padding-bottom: 15px;
 			width: 50%;
-			height: 120px;
+			overflow: auto;
 			text-align: center;
+			outline: 1px solid black;
+		}
+
+		.debug-container * {
+			margin: 2px;
 		}
 
 		.param-input {
 			width: 70px;
+		}
+
+		.action-button {
+			margin-top: 10px;
 		}
 
 	</style>
@@ -47,24 +56,34 @@
 		<!-- div for api iframe -->
 		<div id="insidemaps-virtual-tour" class="virtual-tour-container"></div>
 
-		<div id="camera-container" class="debug-container">
-			<b>Camera</b><br>
+		<div id="object-container" class="debug-container">
+			<b>Objects</b><br>
+			<div>
+				<select id="object-models" style="width: 200px;"></select>
+				Extra Data:
+				<input id="object-extra-data" type="text" />
+			</div>
 			<div>
 				Position:
-				x: <input id="camera-position-x" type="text" class="param-input">
-				y: <input id="camera-position-y" type="text" class="param-input">
-				z: <input id="camera-position-z" type="text" class="param-input">
+				x: <input id="object-position-x" type="text" class="param-input" value="0">
+				y: <input id="object-position-y" type="text" class="param-input" value="0">
+				z: <input id="object-position-z" type="text" class="param-input" value="0">
 			</div>
 			<div>
-				Look At:
-				x: <input id="camera-lookat-x" type="text" class="param-input">
-				y: <input id="camera-lookat-y" type="text" class="param-input">
-				z: <input id="camera-lookat-z" type="text" class="param-input">
+				Rotation:
+				x: <input id="object-rotation-x" type="text" class="param-input" value="0">
+				y: <input id="object-rotation-y" type="text" class="param-input" value="0">
+				z: <input id="object-rotation-z" type="text" class="param-input" value="0">
 			</div>
-			<button class="action-button" style="margin-top: 10px;" onclick="updateCameraWithInputParams()" disabled>Update</button>
+			<div>
+				Event Info:
+				<input id="object-event-info" type="text" style="width: 250px;" disabled />
+			</div>
+			<button class="action-button" onclick="addWithInputParams()" disabled>Add</button>
+			<button class="action-button" onclick="addWithCameraParams()" disabled>Add To Camera Position</button>
 		</div>
 
-		<div id="material-position" class="debug-container">
+		<div id="material-container" class="debug-container">
 			<b>Material</b><br>
 			<div>
 				Material ID:
@@ -84,8 +103,25 @@
 				y: <input id="material-direction-y" type="text" class="param-input" value="-1">
 				z: <input id="material-direction-z" type="text" class="param-input" value="0">
 			</div>
-			<button class="action-button" style="margin-top: 10px;" onclick="selectMaterialWithInputParams()" disabled>Lookup With Input Data</button>
-			<button class="action-button" style="margin-top: 10px;" onclick="selectMaterialWithCameraParams()" disabled>Lookup With Camera Data</button>
+			<button class="action-button" onclick="selectMaterialWithInputParams()" disabled>Lookup With Input Data</button>
+			<button class="action-button" onclick="selectMaterialWithCameraParams()" disabled>Lookup With Camera Data</button>
+		</div>
+
+		<div id="camera-container" class="debug-container">
+			<b>Camera</b><br>
+			<div>
+				Position:
+				x: <input id="camera-position-x" type="text" class="param-input">
+				y: <input id="camera-position-y" type="text" class="param-input">
+				z: <input id="camera-position-z" type="text" class="param-input">
+			</div>
+			<div>
+				Look At:
+				x: <input id="camera-lookat-x" type="text" class="param-input">
+				y: <input id="camera-lookat-y" type="text" class="param-input">
+				z: <input id="camera-lookat-z" type="text" class="param-input">
+			</div>
+			<button class="action-button" onclick="updateCameraWithInputParams()" disabled>Update</button>
 		</div>
 	</div>
 
@@ -101,18 +137,22 @@
 				domTargetId: 'insidemaps-virtual-tour',
 				host: 'http://demo.insidemaps.com',  // defaults to www.insidemaps.com
 				model: 'Australia',
-				offline: true
+				offline: true,
+				manualEventHandling: true
 			})
 
 			.then( function( data ) {
-				virtualTour.addCameraEventListener( onCameraUpdate )
 
-				.then( function() {
-					var actionButtons = document.getElementsByClassName( 'action-button' );
-					Array.prototype.forEach.call( actionButtons, function( button ) {
-						button.disabled = false;
-					} );
+				var actionButtons = document.getElementsByClassName( 'action-button' );
+				Array.prototype.forEach.call( actionButtons, function( button ) {
+					button.disabled = false;
 				});
+
+				popupateObjectDropdown();
+
+				virtualTour.addObjectEventListener( onObjectClicked );
+				virtualTour.addCameraEventListener( onCameraUpdate );
+
 			});
 
 		}
@@ -234,6 +274,61 @@
 				}
 
 			}
+
+		}
+
+		/////////////////////////
+		// Object demo section //
+		/////////////////////////
+
+		function popupateObjectDropdown() {
+
+			virtualTour.getObjectModels()
+			.then( function( models ) {
+
+				var objectSelect = document.getElementById( 'object-models' );
+
+				objectSelect.innerHTML = '';
+				models.forEach( function( model ) {
+					objectSelect.innerHTML += '<option>' + model + '</option>';
+				});
+
+			});
+
+		}
+
+		function addSelectedModel( position, rotation ) {
+
+			var objectSelect = document.getElementById( 'object-models' );
+			var selectedModel = objectSelect.options[objectSelect.selectedIndex].text;
+
+			var extraData = document.getElementById( 'object-extra-data' ).value;
+
+			virtualTour.addObjectModel( selectedModel, position, rotation, extraData );
+
+		}
+
+		function addWithInputParams() {
+
+			var position = vectorFromInputs( 'object-position-x', 'object-position-y', 'object-position-z' );
+			var rotation = vectorFromInputs( 'object-rotation-x', 'object-rotation-y', 'object-rotation-z' );
+
+			addSelectedModel( position, rotation );
+
+		}
+
+		function addWithCameraParams() {
+
+			var position = vectorFromInputs( 'camera-position-x', 'camera-position-y', 'camera-position-z' );
+
+			addSelectedModel( position );
+
+		}
+
+		function onObjectClicked( data ) {
+
+			var infoInput = document.getElementById( 'object-event-info' );
+			infoInput.value = JSON.stringify( data );
 
 		}
 
