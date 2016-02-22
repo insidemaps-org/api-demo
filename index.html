@@ -257,7 +257,7 @@
 				});
 			}
 
-			function homeAutomationEventListener( data ) {
+			function homeAutomationEventListener(data) {
 				var id = data.id;
 				var newState = data.persistentData.state;
 				var newName = data.name;
@@ -280,7 +280,7 @@
 				floorPlan.init( {
 					domTargetId: 'insidemaps-floor-plan',
 					host: 'http://demo.insidemaps.com',  // defaults to www.insidemaps.com
-					model: '1020-Post-Apt-505',
+					model: '1020-Post-Apt-505-api',
 					urlParams: [ 'env=prod' ]
 				})
 
