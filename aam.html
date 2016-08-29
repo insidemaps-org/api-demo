@@ -4,7 +4,7 @@
 <head>
 
 	<!-- Page style and script -->
-	<script type='application/javascript' src='http://demo.insidemaps.com/apis/build/imapi.min.js'></script>
+	<script type='application/javascript' src='http://local.insidemaps.com/apis/build/imapi.min.js'></script>
 
 	<title>InsideMaps AAM Demo</title>
 
@@ -29,9 +29,10 @@
 			padding-top: 15px;
 			padding-bottom: 15px;
 			width: 50%;
-			overflow: auto;
+			overflow: hidden;
 			text-align: center;
 			outline: 1px solid black;
+			height:220px;
 		}
 
 		.debug-container * {
@@ -44,6 +45,15 @@
 
 		.action-button {
 			margin-top: 10px;
+		}
+
+		.row-header {
+			text-align: right;
+			width: 100px;
+		}
+
+		button {
+			max-width: 120px;
 		}
 
 	</style>
@@ -84,30 +94,87 @@
 		</div>
 
 		<div id="material-container" class="debug-container">
-			<b>Material</b><br>
-			<div>
-				Material ID:
-				<span id="material-id" style="width: 250px;">Unknown</span>
-				<button class="action-button" onclick="highlightSelectedMaterial( true )" disabled>Highlight</button>
-				<button class="action-button" onclick="highlightSelectedMaterial( false )" disabled>Unhighlight</button>
-			</div>
-			<div>
-				Origin:
-				x: <input id="material-origin-x" type="text" class="param-input" value="0">
-				y: <input id="material-origin-y" type="text" class="param-input" value="0">
-				z: <input id="material-origin-z" type="text" class="param-input"value="0">
-			</div>
-			<div>
-				Direction:
-				x: <input id="material-direction-x" type="text" class="param-input" value="0">
-				y: <input id="material-direction-y" type="text" class="param-input" value="-1">
-				z: <input id="material-direction-z" type="text" class="param-input" value="0">
-			</div>
-			<button class="action-button" onclick="selectMaterialWithInputParams()" disabled>Lookup With Input Data</button>
-			<button class="action-button" onclick="selectMaterialWithCameraParams()" disabled>Lookup With Camera Data</button>
+
+
+			<table style="width:100%">
+				<tr>
+					<td colspan="4">
+						<b>Material</b>
+					</td>
+				</tr>
+
+				<tr>
+					<td class="row-header">
+						<b>ID</b>
+					</td>
+					<td colspan="3">
+						<input id="material-id" type="text" style="width:92%" value="">
+					</td>
+				</tr>
+
+				<tr>
+					<td colspan="4">
+						<button class="action-button" style="margin-top:0px !important;float:right;margin-right:3%;" onclick="highlightSelectedMaterial( true )" disabled>Highlight</button>
+						<button class="action-button" style="margin-top:0px !important;float:right;" onclick="highlightSelectedMaterial( false )" disabled>Unhighlight</button>
+					</td>
+				</tr>
+
+				<tr>
+					<td  class="row-header">
+						<b>Origin</b>
+					</td>
+					<td>
+						x: <input id="material-origin-x" type="text" class="param-input" value="0">
+					</td>
+					<td>
+						y: <input id="material-origin-y" type="text" class="param-input" value="0">
+					</td>
+					<td>
+						z: <input id="material-origin-z" type="text" class="param-input"value="0">
+					</td>
+				</tr>
+
+				<tr>
+					<td  class="row-header">
+						<b>Direction</b>
+					</td>
+					<td>
+						x: <input id="material-direction-x" type="text" class="param-input" value="0">
+					</td>
+					<td>
+						y: <input id="material-direction-y" type="text" class="param-input" value="-1">
+					</td>
+					<td>
+						z: <input id="material-direction-z" type="text" class="param-input" value="0">
+					</td>
+				</tr>
+
+				<tr>
+					<td  class="row-header">
+						<b>Ortho. Point</b>
+					</td>
+					<td>
+						x: <input id="material-x" type="text" class="param-input" value="0">
+					</td>
+					<td>
+						y: <input id="material-y" type="text" class="param-input" value="0">
+					</td>
+					<td>
+					</td>
+				</tr>
+
+				<tr>
+					<td colspan="4">
+						<button class="action-button" onclick="selectMaterialWithInputParams()" disabled>Lookup With Input Data</button>
+						<button class="action-button" onclick="selectMaterialWithCameraParams()" disabled>Lookup With Camera Data</button>
+						<button class="action-button" onclick="selectMaterialWith2DPoint()" disabled>Lookup With Orthogonal Point</button>
+					</td>
+				</tr>
+			</table>
+
 		</div>
 
-		<div id="camera-container" class="debug-container">
+		<div id="camera-container" class="debug-container" style="height:auto;">
 			<b>Camera</b><br>
 			<div>
 				Position:
@@ -135,8 +202,8 @@
 			virtualTour = new InsideMaps.VirtualTour();
 			virtualTour.init({
 				domTargetId: 'insidemaps-virtual-tour',
-				host: 'http://demo.insidemaps.com',  // defaults to www.insidemaps.com
-				model: 'Australia',
+				host: 'http://local.insidemaps.com',  // defaults to www.insidemaps.com
+				model: 'AAM_CleanTech_6thFloor_Units1-7',
 				offline: true,
 				manualEventHandling: true
 			})
@@ -238,11 +305,31 @@
 					selectedMaterialId = materialId;
 
 					var materialString = selectedMaterialId ? selectedMaterialId : 'Unknown';
-					document.getElementById( 'material-id' ).innerHTML = materialString;
+					document.getElementById( 'material-id' ).value = materialString;
 				} );
 
 			}
+		}
 
+		function selectMaterialOnPoint(x, y) {
+
+			if ( x && y ) {
+
+				virtualTour.getMaterialIdFor2DPoint(x, y).then( function( materialId ) {
+					selectedMaterialId = materialId;
+
+					var materialString = selectedMaterialId ? selectedMaterialId : 'Unknown';
+					document.getElementById( 'material-id' ).value = materialString;
+				} );
+
+			}
+		}
+
+		function selectMaterialWith2DPoint() {
+			var x = parseFloat(document.getElementById("material-x").value);
+			var y = parseFloat(document.getElementById("material-y").value);
+
+			selectMaterialOnPoint(x, y);
 		}
 
 		function selectMaterialWithInputParams() {
