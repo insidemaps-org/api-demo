@@ -160,6 +160,7 @@
 						y: <input id="material-y" type="text" class="param-input" value="0">
 					</td>
 					<td>
+						<button onclick="javascript:loadOrthoPoint()">&#8678; From camera</button>
 					</td>
 				</tr>
 
@@ -188,7 +189,10 @@
 				y: <input id="camera-lookat-y" type="text" class="param-input">
 				z: <input id="camera-lookat-z" type="text" class="param-input">
 			</div>
-			<button class="action-button" onclick="updateCameraWithInputParams()" disabled>Update</button>
+			<button class="action-button" onclick="updateCameraWithInputParams()" disabled>Set camera</button>
+			<button class="action-button" onclick="virtualTour.centerView()" disabled>Center View</button>
+			<button class="action-button" onclick="virtualTour.setOverviewMode()" disabled>Overview Mode</button>
+			<button class="action-button" onclick="virtualTour.setFirstPersonMode()" disabled>1st Person Mode</button>
 		</div>
 	</div>
 
@@ -417,6 +421,11 @@
 			var infoInput = document.getElementById( 'object-event-info' );
 			infoInput.value = JSON.stringify( data );
 
+		}
+
+		function loadOrthoPoint() {
+			document.getElementById("material-x").value = document.getElementById("camera-position-x").value;
+			document.getElementById("material-y").value = document.getElementById("camera-position-z").value;
 		}
 
 	</script>
