@@ -43,13 +43,20 @@
 			width: 70px;
 		}
 
-		.action-button {
-			margin-top: 10px;
+		input.gps {
+		    width: 97%;
 		}
 
 		.row-header {
 			text-align: right;
-			width: 100px;
+			width: 105px;
+			font-weight: bold;
+			font-size: 14px;
+		}
+
+
+		.row-fill input {
+			width: 100%;
 		}
 
 		button {
@@ -105,7 +112,7 @@
 
 				<tr>
 					<td class="row-header">
-						<b>ID</b>
+						ID
 					</td>
 					<td colspan="3">
 						<input id="material-id" type="text" style="width:92%" value="">
@@ -121,7 +128,7 @@
 
 				<tr>
 					<td  class="row-header">
-						<b>Origin</b>
+						Origin
 					</td>
 					<td>
 						x: <input id="material-origin-x" type="text" class="param-input" value="0">
@@ -136,7 +143,7 @@
 
 				<tr>
 					<td  class="row-header">
-						<b>Direction</b>
+						Direction
 					</td>
 					<td>
 						x: <input id="material-direction-x" type="text" class="param-input" value="0">
@@ -151,7 +158,7 @@
 
 				<tr>
 					<td  class="row-header">
-						<b>Ortho. Point</b>
+						Ortho. Point
 					</td>
 					<td>
 						x: <input id="material-x" type="text" class="param-input" value="0">
@@ -194,6 +201,60 @@
 			<button class="action-button" onclick="virtualTour.setOverviewMode()" disabled>Overview Mode</button>
 			<button class="action-button" onclick="virtualTour.setFirstPersonMode()" disabled>1st Person Mode</button>
 		</div>
+		<div id="camera-container" class="debug-container" style="height:auto;">
+
+			<table style="width:100%">
+				<tr>
+					<td colspan="3">
+						<b>GPS</b> (lat,lon)
+					</td>
+				</tr>
+				<tr>
+					<td class="row-header">
+						GPS center:
+					</td>
+					<td colspan="2">
+						<input id="gps-center" type="text" class="gps" value="1.355258,103.693501">
+					</td>
+				</tr>
+				<tr><td colspan="3"><hr/></td></tr>
+				<tr>
+					<td class="row-header">
+						Camera GPS:
+					</td>
+					<td colspan="2">
+						<input id="camera-position-gps" type="text" class="gps">
+					</td>
+				</tr>
+
+				<tr>
+					<td class="row-header">
+						Camera Planar:
+					</td>
+					<td>
+						x: <input id="camera-position-planar-x" type="text" class="param-input">
+						z: <input id="camera-position-planar-z" type="text" class="param-input">
+					</td>
+					<td>
+						<button class="action-button" onclick="convertGPSCameraPositionToPlanar()" disabled>Convert GPS</button>
+					</td>
+				</tr>
+				<tr><td colspan="3"><hr/></td></tr>
+				<tr>
+					<td class="row-header">
+						GPS position:
+					</td>
+					<td>
+						<input id="camera-new-position-gps" type="text" style="width: 100%;">
+					</td>
+					<td>
+						<button class="action-button" onclick="moveCameraToGPS()" disabled>Move camera</button>
+					</td>
+				</tr>
+			</table>
+
+
+		</div>
 	</div>
 
 	<script>
@@ -231,6 +292,22 @@
 		///////////////////////
 		// Utility functions //
 		///////////////////////
+		///
+
+		function convertGPSCameraPositionToPlanar() {
+			var currentGps = stringToGPS(document.getElementById("camera-position-gps").value);
+			var planar = virtualTour.gpsToPlanar(gpsGetCenter(), currentGps);
+			document.getElementById("camera-position-planar-x").value = planar.x;
+			document.getElementById("camera-position-planar-z").value = planar.z;
+		}
+
+		function moveCameraToGPS() {
+			var newGps = stringToGPS(document.getElementById("camera-new-position-gps").value);
+			var planar = virtualTour.gpsToPlanar(gpsGetCenter(), newGps);
+
+			var lookAt = vectorFromInputs( 'camera-lookat-x', 'camera-lookat-y', 'camera-lookat-z' );
+			virtualTour.setCameraParams( planar, lookAt );
+		}
 
 		function parseCameraData( cameraData ) {
 
@@ -270,6 +347,32 @@
 
 		}
 
+
+		function stringToGPS(str) {
+			var latlon = str.split(",");
+			var res = {
+				lat : 0,
+				lon : 0
+			};
+
+			if(latlon.length == 2)
+			{
+				res.lat = parseFloat(latlon[0].trim());
+				res.lon = parseFloat(latlon[1].trim());
+			}
+
+			return res;
+		}
+
+		function gpsGetCenter(){
+			var str = document.getElementById("gps-center").value;
+			return stringToGPS(str);
+		}
+
+		function gpsToString(coordinates) {
+			return coordinates.lat+","+coordinates.lon;
+		}
+
 		/////////////////////////
 		// Camera demo section //
 		/////////////////////////
@@ -292,6 +395,8 @@
 
 			populateInputsFromVector( positionVector, 'camera-position-x', 'camera-position-y', 'camera-position-z' );
 			populateInputsFromVector( lookAtVector, 'camera-lookat-x', 'camera-lookat-y', 'camera-lookat-z' );
+
+			document.getElementById('camera-position-gps').value = gpsToString(virtualTour.planarToGPS(gpsGetCenter(), positionVector));
 
 		}
 
